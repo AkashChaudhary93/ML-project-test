@@ -1,3 +1,128 @@
+
+# app.py
+import streamlit as st
+import pandas as pd
+import numpy as np
+import joblib
+
+# Load the saved models, encoders, and preprocessor
+@st.cache_resource
+def load_models():
+    tier_model = joblib.load('tier_model.pkl')
+    name_model = joblib.load('name_model.pkl')
+    branch_model = joblib.load('branch_model.pkl')
+    salary_model = joblib.load('salary_model.pkl')
+    name_encoder = joblib.load('name_encoder.pkl')
+    branch_encoder = joblib.load('branch_encoder.pkl')
+    college_encoder = joblib.load('college_encoder.pkl')
+    preprocessor = joblib.load('preprocessor.pkl')
+    return (tier_model, name_model, branch_model, salary_model, 
+            name_encoder, branch_encoder, college_encoder, preprocessor)
+
+(tier_model, name_model, branch_model, salary_model, 
+ name_encoder, branch_encoder, college_encoder, preprocessor) = load_models()
+
+# Define college hierarchy (same as in your notebook)
+college_hierarchy = [
+    'Tier 4 - Other',
+    'Tier 3 - Private/State', 
+    'Tier 2 - Mid Colleges',
+    'Tier 1 - Other IIT/Top NIT',
+    'Tier 1 - Top IIT'
+]
+
+# Streamlit app
+def main():
+    st.title("College Admission & Salary Predictor")
+    st.write("Enter your details below to predict college tier, name, branch, and expected salary.")
+
+    # Sidebar for input fields
+    with st.sidebar:
+        st.header("Student Details")
+        
+        # Numerical inputs
+        tenth = st.number_input("10th Percentage", min_value=0.0, max_value=100.0, value=80.0, step=0.1)
+        twelfth = st.number_input("12th Percentage", min_value=0.0, max_value=100.0, value=80.0, step=0.1)
+        jee = st.number_input("JEE Rank", min_value=1, value=1000, step=1)
+        workexp = st.number_input("Work Experience (years)", min_value=0, value=2, step=1)
+        fexp = st.slider("Field Experience (years)", min_value=0, max_value=20, value=2, step=1)
+        proj = st.slider("Number of Projects", min_value=0, max_value=20, value=1, step=1)
+        exp_lev = st.selectbox("Expertise Level", options=[1, 2, 3, 4, 5], index=2)
+        intern = st.slider("Number of Internships", min_value=0, max_value=10, value=0, step=1)
+        soft = st.selectbox("Soft Skills Rating", options=[1, 2, 3, 4, 5], index=2)
+        apt = st.selectbox("Aptitude Rating", options=[1, 2, 3, 4, 5], index=2)
+        dsa = st.selectbox("DSA Level", options=[1, 2, 3, 4, 5], index=2)
+        hack = st.slider("Number of Hackathons", min_value=0, max_value=10, value=0, step=1)
+        codeqs = st.slider("Competitive Coding Questions Solved", min_value=0, max_value=200, value=50, step=10)
+        repos = st.slider("Number of Repositories", min_value=0, max_value=50, value=5, step=1)
+        ghacts = st.slider("GitHub Activities", min_value=0, max_value=50, value=10, step=1)
+        li = st.slider("LinkedIn Posts", min_value=0, max_value=50, value=3, step=1)
+        certs = st.slider("Number of Certifications", min_value=0, max_value=20, value=0, step=1)
+        cgpa = st.slider("CGPA", min_value=1.0, max_value=10.0, value=7.0, step=0.1)
+
+        # Categorical inputs
+        gender = st.selectbox("Gender", options=['Male', 'Female', 'Other'], index=0)
+        domain = st.selectbox("Domain", options=['Full Stack', 'Machine Learning', 'Android Development', 'Other'], index=0)
+        ref = st.selectbox("Referral", options=['Yes', 'No'], index=1)
+
+        # Predict button
+        predict_button = st.button("Predict")
+
+    # Prediction logic
+    if predict_button:
+        # Create input dataframe
+        input_data = {
+            '10th_percent': tenth,
+            '12th_percent': twelfth,
+            'jee_rank': jee,
+            'experience': workexp,
+            'experience_field': fexp,
+            'num_projects': proj,
+            'expertise_level': exp_lev,
+            'num_internships': intern,
+            'soft_skill_rating': soft,
+            'aptitude_rating': apt,
+            'dsa_level': dsa,
+            'num_hackathons': hack,
+            'competitive_coding_solved': codeqs,
+            'num_repos': repos,
+            'github_activities': ghacts,
+            'linkedin_posts': li,
+            'num_certifications': certs,
+            'cgpa': cgpa,
+            'gender': gender,
+            'domain': domain,
+            'referral': ref
+        }
+        inp_df = pd.DataFrame([input_data])
+
+        # Make predictions
+        t_code = tier_model.predict(inp_df)[0]
+        n_code = name_model.predict(inp_df)[0]
+        b_code = branch_model.predict(inp_df)[0]
+        sal = salary_model.predict(inp_df)[0]
+
+        # Decode predictions
+        tier_pred = college_hierarchy[int(t_code)]
+        name_pred = name_encoder.inverse_transform([[n_code]])[0][0]
+        branch_pred = branch_encoder.inverse_transform([[b_code]])[0][0]
+        salary_pred = sal
+
+        # Display results
+        st.subheader("Prediction Results")
+        st.write(f"**College Tier**: {tier_pred}")
+        st.write(f"**College Name**: {name_pred}")
+        st.write(f"**Branch**: {branch_pred}")
+        st.write(f"**Expected Salary**: ₹{salary_pred:,.2f}")
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+    
 # import streamlit as st
 # import joblib
 # import pandas as pd
@@ -450,123 +575,3 @@
 # st.write("© 2025 Career Predictor Pro | Powered by Streamlit")
 
 
-
-
-# app.py
-import streamlit as st
-import pandas as pd
-import numpy as np
-import joblib
-
-# Load the saved models, encoders, and preprocessor
-@st.cache_resource
-def load_models():
-    tier_model = joblib.load('tier_model.pkl')
-    name_model = joblib.load('name_model.pkl')
-    branch_model = joblib.load('branch_model.pkl')
-    salary_model = joblib.load('salary_model.pkl')
-    name_encoder = joblib.load('name_encoder.pkl')
-    branch_encoder = joblib.load('branch_encoder.pkl')
-    college_encoder = joblib.load('college_encoder.pkl')
-    preprocessor = joblib.load('preprocessor.pkl')
-    return (tier_model, name_model, branch_model, salary_model, 
-            name_encoder, branch_encoder, college_encoder, preprocessor)
-
-(tier_model, name_model, branch_model, salary_model, 
- name_encoder, branch_encoder, college_encoder, preprocessor) = load_models()
-
-# Define college hierarchy (same as in your notebook)
-college_hierarchy = [
-    'Tier 4 - Other',
-    'Tier 3 - Private/State', 
-    'Tier 2 - Mid Colleges',
-    'Tier 1 - Other IIT/Top NIT',
-    'Tier 1 - Top IIT'
-]
-
-# Streamlit app
-def main():
-    st.title("College Admission & Salary Predictor")
-    st.write("Enter your details below to predict college tier, name, branch, and expected salary.")
-
-    # Sidebar for input fields
-    with st.sidebar:
-        st.header("Student Details")
-        
-        # Numerical inputs
-        tenth = st.number_input("10th Percentage", min_value=0.0, max_value=100.0, value=80.0, step=0.1)
-        twelfth = st.number_input("12th Percentage", min_value=0.0, max_value=100.0, value=80.0, step=0.1)
-        jee = st.number_input("JEE Rank", min_value=1, value=1000, step=1)
-        workexp = st.number_input("Work Experience (years)", min_value=0, value=2, step=1)
-        fexp = st.slider("Field Experience (years)", min_value=0, max_value=20, value=2, step=1)
-        proj = st.slider("Number of Projects", min_value=0, max_value=20, value=1, step=1)
-        exp_lev = st.selectbox("Expertise Level", options=[1, 2, 3, 4, 5], index=2)
-        intern = st.slider("Number of Internships", min_value=0, max_value=10, value=0, step=1)
-        soft = st.selectbox("Soft Skills Rating", options=[1, 2, 3, 4, 5], index=2)
-        apt = st.selectbox("Aptitude Rating", options=[1, 2, 3, 4, 5], index=2)
-        dsa = st.selectbox("DSA Level", options=[1, 2, 3, 4, 5], index=2)
-        hack = st.slider("Number of Hackathons", min_value=0, max_value=10, value=0, step=1)
-        codeqs = st.slider("Competitive Coding Questions Solved", min_value=0, max_value=200, value=50, step=10)
-        repos = st.slider("Number of Repositories", min_value=0, max_value=50, value=5, step=1)
-        ghacts = st.slider("GitHub Activities", min_value=0, max_value=50, value=10, step=1)
-        li = st.slider("LinkedIn Posts", min_value=0, max_value=50, value=3, step=1)
-        certs = st.slider("Number of Certifications", min_value=0, max_value=20, value=0, step=1)
-        cgpa = st.slider("CGPA", min_value=1.0, max_value=10.0, value=7.0, step=0.1)
-
-        # Categorical inputs
-        gender = st.selectbox("Gender", options=['Male', 'Female', 'Other'], index=0)
-        domain = st.selectbox("Domain", options=['Full Stack', 'Machine Learning', 'Android Development', 'Other'], index=0)
-        ref = st.selectbox("Referral", options=['Yes', 'No'], index=1)
-
-        # Predict button
-        predict_button = st.button("Predict")
-
-    # Prediction logic
-    if predict_button:
-        # Create input dataframe
-        input_data = {
-            '10th_percent': tenth,
-            '12th_percent': twelfth,
-            'jee_rank': jee,
-            'experience': workexp,
-            'experience_field': fexp,
-            'num_projects': proj,
-            'expertise_level': exp_lev,
-            'num_internships': intern,
-            'soft_skill_rating': soft,
-            'aptitude_rating': apt,
-            'dsa_level': dsa,
-            'num_hackathons': hack,
-            'competitive_coding_solved': codeqs,
-            'num_repos': repos,
-            'github_activities': ghacts,
-            'linkedin_posts': li,
-            'num_certifications': certs,
-            'cgpa': cgpa,
-            'gender': gender,
-            'domain': domain,
-            'referral': ref
-        }
-        inp_df = pd.DataFrame([input_data])
-
-        # Make predictions
-        t_code = tier_model.predict(inp_df)[0]
-        n_code = name_model.predict(inp_df)[0]
-        b_code = branch_model.predict(inp_df)[0]
-        sal = salary_model.predict(inp_df)[0]
-
-        # Decode predictions
-        tier_pred = college_hierarchy[int(t_code)]
-        name_pred = name_encoder.inverse_transform([[n_code]])[0][0]
-        branch_pred = branch_encoder.inverse_transform([[b_code]])[0][0]
-        salary_pred = sal
-
-        # Display results
-        st.subheader("Prediction Results")
-        st.write(f"**College Tier**: {tier_pred}")
-        st.write(f"**College Name**: {name_pred}")
-        st.write(f"**Branch**: {branch_pred}")
-        st.write(f"**Expected Salary**: ₹{salary_pred:,.2f}")
-
-if __name__ == "__main__":
-    main()

@@ -346,7 +346,7 @@ college_hierarchy = [
 
 def main():
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x50.png?text=Logo", use_column_width=True)
+        st.image("https://via.placeholder.com/150x50.png?text=Logo",use_container_width=True)
         st.markdown("## Navigation")
         page = st.radio("Go to", ["Predictor", "Dashboard", "About"], label_visibility="collapsed")
         
